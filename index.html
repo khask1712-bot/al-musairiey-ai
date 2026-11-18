@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المصيريعي | المساعد الذكي</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f8;color:#1d2939;font-family:Tahoma,Arial,sans-serif}
+header{background:#213750;color:#fff;padding:18px 22px}header h1{margin:0 0 5px;font-size:21px}header p{margin:0;color:#dce5ef;font-size:13px}
+main{max-width:1300px;margin:auto;padding:18px;display:grid;grid-template-columns:370px 1fr;gap:16px}
+.panel{background:#fff;border:1px solid #e2e7ee;border-radius:14px;overflow:hidden;min-width:0}
+.panel h2{font-size:16px;margin:0;padding:14px 16px;border-bottom:1px solid #e7ebf0}
+.catalogSearch{padding:12px 14px;border-bottom:1px solid #e7ebf0}
+input{width:100%;padding:11px;border:1px solid #ccd4df;border-radius:9px;font:inherit}
+.products{height:calc(100vh - 250px);overflow:auto;padding:10px;display:grid;gap:8px;align-content:start}
+.product{display:grid;grid-template-columns:86px 1fr;gap:10px;padding:8px;border:1px solid #e4e8ee;border-radius:10px;cursor:pointer}
+.product.active{border-color:#7893b0;background:#f0f5fa}.product img{width:86px;height:72px;object-fit:contain;background:#fafafa;border-radius:7px}
+.ar{font-weight:bold;font-size:13px;margin:3px 0 5px}.en{font-size:12px;color:#667085;direction:ltr;text-align:right}.pg{font-size:11px;color:#987a3d;margin-top:5px}
+.chathead{padding:14px 16px;border-bottom:1px solid #e7ebf0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chathead h2{padding:0;border:0}.selected{font-size:12px;color:#667085}
+.productHero{padding:12px 16px;display:flex;gap:14px;align-items:center;border-bottom:1px solid #e7ebf0}
+.productHero img{width:110px;height:90px;object-fit:contain;background:#fafafa;border-radius:9px}
+.messages{height:calc(100vh - 400px);min-height:270px;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{padding:11px 13px;border-radius:13px;max-width:88%;font-size:14px;line-height:1.8;white-space:pre-wrap}
+.bot{background:#f0f3f7;align-self:flex-start;border-top-right-radius:4px}.user{background:#e8f2ff;align-self:flex-end;border-top-left-radius:4px}
+.composer{padding:12px;border-top:1px solid #e7ebf0;display:flex;gap:8px}
+.composer input{flex:1;min-width:0}.composer button{background:#213750;color:#fff;border:0;border-radius:9px;padding:0 18px;font:inherit;cursor:pointer}
+.actions{padding:0 14px 14px;display:flex;gap:8px;flex-wrap:wrap}.actions a{font-size:12px;color:#213750}
+.disclaimer{margin:0 14px 12px;padding:9px 11px;background:#fff8e8;color:#765c23;border-radius:8px;font-size:11px;line-height:1.7}
+@media(max-width:850px){main{grid-template-columns:1fr}.products{height:260px}.messages{height:360px}}
+</style></head>
+<body>
+<header><h1>شركة المصيريعي للمعدات الصناعية</h1><p>مساعد ذكي لشرح صور القطع من الكتالوج — العربية واللغات الأخرى</p></header>
+<main>
+<section class="panel">
+<h2>فهرس الكتالوج</h2>
+<div class="catalogSearch"><input id="search" placeholder="ابحث بالعربي أو English أو الصفحة"></div>
+<div class="products" id="products"></div>
+</section>
+<section class="panel">
+<div class="chathead"><h2>اسأل عن القطعة</h2><span class="selected" id="selected">اختر صفحة من الفهرس</span></div>
+<div class="productHero"><img id="hero" src="pages/page-3.jpg" alt="صورة القطعة"><div><div class="ar" id="nameAr">علبة تروس / مخفّض سرعة</div><div class="en" id="nameEn">Gearbox / Speed Reducer</div></div></div>
+<div class="messages" id="messages"><div class="msg bot">مرحباً بك! اختر قطعة من الفهرس ثم اسألني عن صورتها أو وظيفتها. سأجيب باللغة التي تكتب بها، وسأوضح لك عندما لا تسمح الصورة بتأكيد نوع القطعة.</div></div>
+<form class="composer" id="form"><input id="question" placeholder="مثال: ما وظيفة هذه القطعة؟ / What is this part used for?" autocomplete="off"><button id="send">إرسال</button></form>
+<div class="disclaimer">الشرح يعتمد على الصورة وقد يكون التعرف مبدئياً. لا تتوفر هنا بيانات المخزون أو الأسعار أو أرقام القطع غير الظاهرة في الكتالوج.</div>
+<div class="actions"><a href="catalog.pdf" target="_blank">فتح ملف الكتالوج PDF</a><a href="https://wa.me/966502618568" target="_blank">التواصل مع الشركة عبر واتساب</a></div>
+</section>
+</main>
+<script>
+let catalog=[], selectedPage=3, history=[];
+const products=document.getElementById('products'), messages=document.getElementById('messages');
+function addMessage(text,kind){const d=document.createElement('div');d.className='msg '+kind;d.textContent=text;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;}
+function selectItem(item){
+ selectedPage=item.page;document.getElementById('selected').textContent='صفحة '+item.page;
+ document.getElementById('hero').src=item.image;document.getElementById('nameAr').textContent=item.ar;document.getElementById('nameEn').textContent=item.en;
+ document.querySelectorAll('.product').forEach(x=>x.classList.toggle('active',Number(x.dataset.page)===item.page));
+ history=[];addMessage('تم اختيار صفحة '+item.page+'. اكتب سؤالك عن هذه القطعة.','bot');
+}
+function render(){
+ const q=document.getElementById('search').value.trim().toLowerCase();products.innerHTML='';
+ catalog.filter(x=>(x.ar+' '+x.en+' '+x.page).toLowerCase().includes(q)).forEach(item=>{
+ const d=document.createElement('div');d.className='product';d.dataset.page=item.page;
+ d.innerHTML='<img src="'+item.image+'" loading="lazy"><div><div class="ar"></div><div class="en"></div><div class="pg">صفحة '+item.page+'</div></div>';
+ d.querySelector('.ar').textContent=item.ar;d.querySelector('.en').textContent=item.en;d.onclick=()=>selectItem(item);products.appendChild(d);
+ });
+}
+async function sendQuestion(q){
+ if(!q.trim())return;addMessage(q,'user');history.push({role:'user',content:q});
+ const button=document.getElementById('send');button.disabled=true;button.textContent='...';
+ try{
+  const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,page:selectedPage,history:history.slice(-8,-1)})});
+  const data=await r.json();if(!r.ok)throw new Error(data.error||'تعذر الاتصال بالمساعد');
+  addMessage(data.answer,'bot');history.push({role:'assistant',content:data.answer});
+ }catch(e){addMessage(e.message,'bot');}
+ finally{button.disabled=false;button.textContent='إرسال';}
+}
+document.getElementById('form').addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById('question');const q=i.value;i.value='';sendQuestion(q);});
+document.getElementById('search').addEventListener('input',render);
+fetch('/catalog.json').then(r=>r.json()).then(data=>{catalog=data;render();const first=catalog.find(x=>x.page===3);if(first)selectItem(first);}).catch(()=>addMessage('تعذر تحميل فهرس الكتالوج.','bot'));
+</script></body></html>
